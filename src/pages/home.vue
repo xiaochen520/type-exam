@@ -47,20 +47,32 @@
 
     <div class="module-list flex flex-h-c">
       <div class="m-item">
-        <img src="" alt="">
+        <div class="mi-nav flex-m">
+          <div>考试</div>
+            <img src="../imgs/img_index_ks1.png" alt="">
+        </div>
+        
         <div class="btn-group">
           <button class="btn">考试</button>
           <button class="btn">模拟</button>
         </div>
       </div>
       <div class="m-item">
-        <img class="img" src="" alt="">
+        <div class="mi-nav">
+            <div>训练</div>
+            <img class="img" src="../imgs/img_index_xl.png" alt="">
+        </div>
+        
         <div class="btn-group">
           <button class="btn" @click='beginTest'>立即进入</button>
         </div>
       </div>
       <div class="m-item">
-        <img src="" alt="">
+        <div class="mi-nav">
+            <div>统计</div>
+            <img src="../imgs/img_index_tj.png" alt="">
+        </div>
+        
         <div class="btn-group">
           <button class="btn">考试</button>
           <button class="btn">模拟</button>
