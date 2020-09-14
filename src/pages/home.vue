@@ -72,22 +72,22 @@
       <div class='footer-top'>
         <div class="outer flex-m">
           <img class="logo" src="../imgs/logo_white.png" alt="">
-          <div class="ft-content flex-m flex-1">
+          <div class="ft-content flex flex-1">
             <div class="ft-meun-left">
               <div class="title">常用链接</div>
               <div class="list">
                 <div class="item">图书馆资源</div>
-                <div class="item">图书馆资源</div>
-                <div class="item">图书馆资源</div>
-                <div class="item">图书馆资源</div>
-                <div class="item">图书馆资源</div>
+                <div class="item">网络教学平台</div>
+                <div class="item">后勤服务系统</div>
+                <div class="item">领导信箱</div>
+                <div class="item">学生缴费</div>
               </div>
             </div>
             <div class="ft-menu-right">
-              <div>图书馆资源</div>
-              <div>图书馆资源</div>
-              <div>图书馆资源</div>
-              <div>图书馆资源</div>
+              <div>教务管理系统</div>
+              <div>专业综合改革</div>
+              <div>办公自动化系统</div>
+              <div>电子邮件系统</div>
             </div>
             <div class="ft-code">
               <img src="../imgs/dhxy_07.png" alt="">
@@ -212,6 +212,7 @@ export default {
           color: #fff;
           display: block;
           width: 100%;
+          padding: 3px 0;
           margin-bottom: 15px;
         }
       }
@@ -250,9 +251,11 @@ export default {
             color: #92b5de;
             line-height: 1.5;
             margin-right: 80px;
+            padding-top: 34px;
           }
           .ft-code {
             margin-right: 20px;
+            padding-top: 20px;
             img {
               width: 80px;
             }

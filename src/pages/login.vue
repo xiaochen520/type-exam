@@ -38,18 +38,24 @@
           alert('请输入密码');
           return;
         }
-        
+
         const params = {
           studentNumber: this.user,
           password: this.psd
         }
 
         this.$post(api.login, params).then(res => {
-          if(res.code == 0) {
-            alert('登录成功');
-            sessionStorage.setItem('token', res.token);
-            sessionStorage.setItem('user', this.user);
-            this.$router.push('/');
+          if (res.code == 0) {
+            this.$Message.success({
+              content: '登录成功',
+              onClose: () => {
+                sessionStorage.setItem('token', res.token);
+                sessionStorage.setItem('user', this.user);
+                this.$router.push('/');
+              }
+            })
+          } else {
+            this.$Message.error(res.msg);
           }
         }).catch(err => {
           console.log(err);

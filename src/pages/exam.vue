@@ -11,7 +11,7 @@
           <span>/首页/</span>
           <span>训练</span>
         </div>
-        <div class="left-nav flex-m">
+        <div v-if='topic' class="left-nav flex-m">
           <span>开始输入时计时！</span>
           <div class="flex-1 flex-m flex-h-r card-info">
             <span>文章名称：{{topic.topic}}</span>
@@ -19,22 +19,11 @@
           </div>
         </div>
         <div class="paper">
-          <!-- <div class="head">
-            <span>文章名称：{{topicTitlt}}</span>
-            <span>时间：{{minute}}: {{second}}</span>
-            <span>语音播放速度：{{speed}}</span>
-            <button @click='playAudio'>js播放语音</button>
-            <button @click='changeSpeed'>js调速</button>
-            <button @click='playLocal'>音频播放</button>
-            <button @click='changeLocalSpeed'>音频调速</button>
-            <button @click='exit'>完成</button>
-          </div> -->
-
-          <div class="exam-item" v-for="(item, index) in testList" :key="index">
+          <div class="exam-item" :class='{focus: item.focus}' v-for="(item, index) in testList" :key="index">
             <div class="topic">
               <span :class="spanSty(index, i)" v-for="(str, i) in item.text" :key="i">{{str}}</span>
             </div>
-            <input @input='handInput' class="answer" type="text" v-model="item.value" />
+            <input v-focus='item.focus' @keyup.space='clickSpace(item, index)' @focus='getFocus(item)' @input='handInput' class="answer" type="text" v-model="item.value" />
           </div>
 
         </div>
@@ -50,17 +39,13 @@
         </div>
 
         <div class="exam-info">
-          <!-- <div class="er-item">
-            <img src="" alt="">
-            <span>速度:0KPM</span>
-          </div> -->
           <div class="er-item">
             <img src="" alt="">
             <span>正确率:{{correctRatio}}%</span>
           </div>
           <div class="er-item">
             <img src="" alt="">
-            <span>总单词量: {{topic.content.split(" ").length}}</span>
+            <span v-if='topic'>总单词量: {{topic.content.split(" ").length}}</span>
           </div>
         </div>
         <div class="exam-info opera-btn">
@@ -74,7 +59,7 @@
           </div>
           <div class="er-item" @click='changeSpeed'>
             <img src="" alt="">
-            <span>播放速度:X{{this.speed}}</span>
+            <span>播放速度:X{{speed}}</span>
           </div>
           <div class="er-item" @click='exitExam'>
             <img src="" alt="">
@@ -92,7 +77,7 @@
       <div class='res-box flex flex-h-c'>
         <div class="rb-item flex-m">
           <span class="label">时间：</span>
-          <span class="s">{{this.time - this.second}}</span>
+          <span class="s">{{time - second}}</span>
           <span>秒</span>
         </div>
         <div class="rb-item flex-m">
@@ -127,21 +112,7 @@
         showResModal: false,
         speed: 1,
         time: 0,
-        topicArr: [
-          {
-            id: 1,
-            topic: "one",
-            content:
-              "Hooray! It's snowing! It's time to make a snowman.James runs out. He makes a big pile of snow. He puts a big snowball on top. He adds a scarf and a hat. He adds an orange for the nose. He adds coal for the eyes and buttons.In the evening, James opens the door. What does he see? The snowman is moving! James invites him in. The snowman has never been inside a house. He says hello to the cat. He plays with paper towels.A moment later, the snowman takes James's hand and goes out.They go up, up, up into the air! They are flying! What a wonderful night!The next morning, James jumps out of bed. He runs to the door.He wants to thank the snowman. But he's gone.",
-            voice: null,
-            subjectType: "文章",
-            subjectLebal: "大自然",
-            score: "10",
-            createTime: "2020-09-11",
-            creator: "baozq",
-            updateTime: null
-          }
-        ],
+        topicArr: [],
         isStart: false,
         topic: null,
         testList: [],
@@ -153,16 +124,25 @@
     },
     created() {
       this.time = this.$route.query.time;
-      this.topic = this.topicArr[0];
       this.getPaper();
-      // let language = topic[this.topicIndex].language;
-      // this.topicIndex = this.$route.query.index;
-      // this.topic = topic[this.topicIndex].topic;
-      // this.topicTitlt = topic[this.topicIndex].title;
-      // this.calcTime();
     },
     mounted() { },
     methods: {
+      clickSpace(item, index) {
+        if(index == (this.testList.length - 1)) return;
+       if(item.text.length <= item.value.length) {
+        this.testList.forEach(e => {
+          e.focus = false;
+        })
+        this.testList[index+1].focus = true;        
+       }
+      },
+      getFocus(item) {
+        this.testList.forEach(e => {
+          e.focus = false;
+        })
+        item.focus = true;
+      },
       goRes() {
         this.$router.push({ path: '/' });
       },
@@ -195,7 +175,7 @@
         }
       },
       pauseVoice() {
-        if(!this.isStart) return;
+        if (!this.isStart) return;
         if (this.isPause) return;
 
         if (!this.isPauseVoice) {
@@ -231,24 +211,17 @@
       },
       handInput() {
         if (!this.isStart) {
-          this.calcTime();
+          this.calcTime(this.time);
           this.isStart = true;
           this.playVoice();
         }
 
         this.calcMark();
       },
-      getPaper() {
-        let query = this.$route.query;
-        let params = {
-          subjectType: query.subjectType,
-          subjectLebal: query.subjectLebal
-        };
-
+      formatData() {
         let workArr = this.topic.content.split(" ");
         let testArr = [];
         let cycleIndex = Math.ceil(workArr.length / 10);
-
         for (let i = 0; i < cycleIndex; i++) {
           let str = "";
           if (i + 1 == cycleIndex) {
@@ -257,20 +230,39 @@
             str = workArr.slice(i * 10, 10 * (i + 1)).join(" ");
           }
           console.log(str);
-          testArr.push({ text: str, value: "" });
+          testArr.push({ text: str, value: "", focus: false });
         }
         this.testList = testArr;
-
-        if (!this.topic.voice) {
-          this.speech = new Speech();
-          if (this.speech.hasBrowserSupport()) {
-            this.speech.setLanguage("en-US");
-            this.speech.setRate(this.speed);
-          } else {
-            console.log("speech synthesis unsupported");
-          }
+      },
+      getPaper() {
+        if (this.topicArr.length) {
+          this.formatData();
+          return;
         }
-        // this.$get(api.subjectList, params).then(res => {});
+        let query = this.$route.query;
+        let params = {
+          subjectType: encodeURI(query.subjectType),
+          subjectLebal: encodeURI(query.subjectLebal)
+        };
+
+        this.$get(api.subjectList, params).then(res => {
+          
+          if (res.data.length) {
+            this.topicArr = res.data;
+            this.topic = this.topicArr[0];
+            this.formatData();
+            
+            if (!this.topic.voice) {
+              this.speech = new Speech();
+              if (this.speech.hasBrowserSupport()) {
+                this.speech.setLanguage("en-US");
+                this.speech.setRate(this.speed);
+              } else {
+                console.log("speech synthesis unsupported");
+              }
+            }
+          }
+        });
       },
       playVoice() {
         if (this.topic.voice) {
@@ -328,9 +320,10 @@
       },
       playAudio() { },
       calcTime(time) {
-        let restTime = time || this.time;
+        let restTime = time;
 
         if (restTime == 0 || this.isEnd) {
+          this.second = restTime;
           this.exit();
           return;
         }
@@ -459,10 +452,19 @@
         border-radius: 12px;
         margin-bottom: 15px;
         padding: 10px 15px 20px;
+        color: #9A9A9A;
 
         .answer {
           width: 100%;
           padding: 5px 10px;
+        }
+      }
+
+      .focus {
+        background: #DDEEFF;
+        color: #343434;
+        .answer {
+         border-color: #1466B8;
         }
       }
 
