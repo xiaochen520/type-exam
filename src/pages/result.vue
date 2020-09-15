@@ -2,25 +2,26 @@
   <div class="result flex-m">
     <div class="box">
       <div class="b-head flex-m flex-h-c">
+        <img src="../imgs/icon-press.png" alt="">
         <span>{{title}}</span>
       </div>
       <div class="b-content">
         <div class="bc-title">本次成绩</div>
-        <div class="bc-list flex">
+        <div class="bc-list flex" v-for='(item, index) in resArr' :key='index'>
           <div class="bc-item">
             <span>文章</span>
             <span><<</span>
-            <span class="s">{{resInfo && resInfo.title}}</span>
+            <span class="s">{{item.title}}</span>
             <span>>></span>
           </div>
           <div class="bc-item">
-            <span>设定</span>
-            <span class="s">{{resInfo && resInfo.time}}</span>
+            <span>用时</span>
+            <span class="s">{{item.time}}</span>
             <span>秒</span>
           </div>
           <div class="bc-item">
             <span>正确率</span>
-            <span class="s">{{resInfo && resInfo.res}}</span>
+            <span class="s">{{item.res}}</span>
             <span>%</span>
           </div>
         </div>
@@ -40,12 +41,18 @@ export default {
   data() {
     return {
       title: "",
-      resInfo: null,
+      resArr: []
     };
   },
   created() {
-    this.resInfo = this.$route.query;
-    if (this.resInfo.res > 60) {
+    this.resArr = JSON.parse(sessionStorage.res);
+
+    let resTotal = 0;
+    this.resArr.forEach(e => {
+      resTotal += Number(e.res);
+    });
+
+    if (resTotal / this.resArr.length > 60) {
       this.title = "及格，继续努力！";
     } else {
       this.title = "不及格，还需加油";
@@ -79,14 +86,22 @@ export default {
       font-size: 16px;
       font-weight: bold;
       padding: 20px;
+      img {
+        width: 35px;
+        margin-right: 10px;
+        margin-top: -20px;
+      }
     }
 
     .b-content {
       padding: 20px 30px;
       .bc-title {
         font-size: 15px;
+        font-weight: bold;
+        margin-bottom: 6px;
       }
       .bc-list {
+        padding: 8px 0;
         font-size: 14px;
         color: #333;
         .bc-item {

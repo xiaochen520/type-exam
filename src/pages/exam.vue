@@ -7,12 +7,13 @@
     </div>
     <div class="content">
       <div class="left">
-        <div class="left-head">
+        <div class="left-head flex-m">
+          <img src="../imgs/htmal5icon06.png" alt="">
           <span>/首页/</span>
           <span>训练</span>
         </div>
         <div v-if='topic' class="left-nav flex-m">
-          <span>开始输入时计时！</span>
+          <span class="s">开始输入时计时！</span>
           <div class="flex-1 flex-m flex-h-r card-info">
             <span>文章名称：{{topic.topic}}</span>
             <span>文章类别：{{topic.subjectType}}</span>
@@ -23,8 +24,8 @@
             <div class="topic">
               <span :class="spanSty(index, i)" v-for="(str, i) in item.text" :key="i">{{str}}</span>
             </div>
-            <input :class="'type-click' + index" @keyup.space='clickSpace(item, index)' @focus='getFocus(item)'
-              @input='handInput' class="answer" type="text" v-model="item.value" />
+            <input :class="'type-click' + index" @keyup.space='clickSpace(item, index)' @focus='getFocus(item)' @input='handInput(index)' class="answer"
+              type="text" v-model="item.value" />
           </div>
 
         </div>
@@ -41,36 +42,37 @@
 
         <div class="exam-info">
           <div class="er-item">
-            <img src="" alt="">
+            <img src="../imgs/ic_xl_zql.png" alt="">
             <span>正确率:{{correctRatio}}%</span>
           </div>
           <div class="er-item">
-            <img src="" alt="">
+            <img src="../imgs/ic_xl_zdcl.png" alt="">
             <span v-if='topic'>总单词量: {{topic.content.split(" ").length}}</span>
           </div>
         </div>
         <div class="exam-info opera-btn">
           <div class="er-item" @click='pauseAll'>
-            <img src="" alt="">
+            <img v-show='!isPause' src="../imgs/icon-play.png" alt="">
+            <img v-show='isPause' src="../imgs/icon-pause.png" alt="">
             <span>{{isPause ? '继续' : '暂停'}}</span>
           </div>
           <div @click='playAndPauseVoice' class="er-item">
-            <img src="" alt="">
+            <img src="../imgs/icon-video.png" alt="">
             <span>语音{{isPauseVoice ? '播放' : '暂停'}}</span>
           </div>
           <div class="er-item" @click='changeSpeed'>
-            <img src="" alt="">
+            <img src="../imgs/icon-play.png" alt="">
             <span>播放速度:X{{speed}}</span>
           </div>
           <div class="er-item" @click='exitExam'>
-            <img src="" alt="">
+            <img src="../imgs/icon-exit.png" alt="">
             <span>退出</span>
           </div>
         </div>
       </div>
     </div>
 
-    <Modal class="res-modal" v-model='showResModal' :closable='false'>
+    <Modal :mask-closable='false' class="res-modal" v-model='showResModal' :closable='false'>
       <div slot='header' class="res-head flex-m flex-h-c">
         <img src="../imgs/icon-res-time.png" alt="">
         <span>结果</span>
@@ -90,12 +92,12 @@
           <span class="s">{{correctRatio}}</span>
           <span>%</span>
         </div>
-
+        <input ref='resBody' type="hidden">
       </div>
 
       <div slot='footer' class="res-footer tc">
         <button class="btn" @click='goRes'>立即查看</button>
-        <button class="btn primary" v-if='topicArr.length > 1' @click='beginNext'>下一题</button>
+        <button class="btn primary" v-if='topicArr.length > (currentNum+1)' @click='beginNext'>下一题</button>
       </div>
     </Modal>
   </div>
@@ -120,13 +122,56 @@
         timer: null,
         second: 0,
         isEnd: false,
-        speech: null
+        speech: null,
+        currentNum: 0
       };
     },
     created() {
       this.time = this.$route.query.time;
       this.second = this.time;
       this.getPaper();
+      sessionStorage.removeItem('res');
+
+      document.onkeydown = oEvent => {
+        console.log(oEvent)
+        var oEvent = oEvent || window.oEvent;
+
+        //获取ctrl 键对应的事件属性
+        var bCtrlKeyCode = oEvent.altKey;
+        if (oEvent.keyCode == 49 && bCtrlKeyCode) {
+          //ctrl+1 增加语速
+          this.changeSpeed();
+        }
+
+        if (oEvent.keyCode == 50 && bCtrlKeyCode) {
+          //ctrl+2 减慢语速
+          if (this.speed > 1) {
+            this.speed++;
+            if (this.topic.voice) {
+              this.$refs.adEle.playbackRate = this.speed;
+            } else {
+              this.speech.cancel();
+              this.speech.setRate(this.speed);
+              this.speech.speak({ text: this.topic.content }).then(() => {
+                console.log("读取成功");
+              });
+            }
+          }
+        }
+
+        if (oEvent.keyCode == 51 && bCtrlKeyCode) {
+          //ctrl+3 暂停语音 
+          this.playAndPauseVoice();
+        }
+
+        if (oEvent.keyCode == 52 && bCtrlKeyCode) {
+          //ctrl+4 暂停训练
+          this.pauseAll();
+        }
+      }
+    },
+    beforeDestroy() {
+      this.speech.cancel();
     },
     methods: {
       clickSpace(item, index) {
@@ -145,22 +190,21 @@
         item.focus = true;
       },
       goRes() {
-        let params = {
-          title: this.topic.topic,
-          time: this.time,
-          res: this.correctRatio
-        }
-        this.$router.push({ path: '/result', query: params });
+        this.$router.push({ path: '/result' });
       },
       beginNext() {
-        this.topic = this.topicArr[1];
+        this.currentNum = this.currentNum + 1;
+        this.topic = this.topicArr[this.currentNum];
         this.correctRatio = 0;
+        this.second = this.time;
+        this.isEnd = false;
+        this.isPause = false;
+        this.isPauseVoice = false;
         this.showResModal = false;
         this.speed = 1;
         this.isStart = false;
-        this.second = 0;
         this.speech.cancel();
-        this.getPaper();
+        this.formatData();
       },
       playAndPauseVoice() {
         if (!this.isStart) {
@@ -168,14 +212,14 @@
           return;
         };
 
-        if(this.isPauseVoice) {
+        if (this.isPauseVoice) {
           this.isPauseVoice = false;
           this.resumeVoice();
         } else {
           this.isPauseVoice = true;
           this.pauseVoice();
         }
-        
+
       },
       pauseVoice() {
         if (this.topic.voice) {
@@ -186,10 +230,10 @@
       },
       resumeVoice() {
         if (this.topic.voice) {
-            this.$refs.adEle.play();
-          } else {
-            this.speech.resume();
-          }
+          this.$refs.adEle.play();
+        } else {
+          this.speech.resume();
+        }
       },
       pauseAll() {
         if (!this.isStart) {
@@ -211,11 +255,21 @@
       exitExam() {
         this.exit();
       },
-      handInput() {
+      handInput(index) {
         if (!this.isStart) {
-          this.calcTime(this.time);
+          this.calcTime(this.second);
           this.isStart = true;
           this.playVoice();
+        }
+        let isFill = false;
+        this.testList.forEach(e => {
+          if (e.text.length > e.value.length) {
+            isFill = true;
+          }
+        });
+        if (!isFill && !this.isEnd) {
+          document.getElementsByClassName('type-click' + index)[0].blur();
+          this.exit();
         }
 
         this.calcMark();
@@ -248,7 +302,7 @@
 
           if (res.data.length) {
             this.topicArr = res.data;
-            this.topic = this.topicArr[0];
+            this.topic = this.topicArr[this.currentNum];
             this.formatData();
 
             if (!this.topic.voice) {
@@ -260,6 +314,8 @@
                 console.log("speech synthesis unsupported");
               }
             }
+          } else {
+            this.$Message.warning('没有内容');
           }
         });
       },
@@ -268,12 +324,14 @@
           this.$refs.adEle.play();
           this.$refs.adEle.playbackRate = this.speed;
         } else {
+          this.speech.cancel();
           this.speech.speak({ text: this.topic.content }).then(() => {
             console.log("读取成功");
           });
         }
       },
       exit() {
+        this.$refs.resBody.focus();
         this.isPauseVoice = true;
         this.isPause = true;
         this.pauseVoice();
@@ -281,7 +339,16 @@
         clearTimeout(this.timer);
         this.calcMark();
         this.showResModal = true;
-
+        let resArr = [];
+        if (sessionStorage.res) {
+          resArr = JSON.parse(sessionStorage.res);
+        }
+        resArr.push({
+          title: this.topic.topic,
+          time: this.time - this.second,
+          res: this.correctRatio
+        })
+        sessionStorage.setItem('res', JSON.stringify(resArr));
         let params = {
           userId: sessionStorage.code,
           name: sessionStorage.user,
@@ -293,7 +360,7 @@
         }
 
         this.$post(api.submitResule, params).then(res => {
-          if(res.errno == 0) {
+          if (res.errno == 0) {
             this.$Message.success('成绩上传成功');
           }
         });
@@ -315,7 +382,7 @@
         this.correctRatio = (sucNum / text.length * 100).toFixed(2);
       },
       changeSpeed() {
-        if(this.isPauseVoice || !this.isStart) {
+        if (this.isPauseVoice || !this.isStart) {
           this.$Message.warning('请开始播放后再操作');
           return;
         }
@@ -389,11 +456,17 @@
         &-head {
           padding: 8px 25px;
           background: #f8f8f8;
+          img {
+            width: 16px;
+            margin-right: 8px;
+          }
         }
 
         &-nav {
           padding: 8px 15px;
-
+          .s {
+            color: #F32836;
+          }
           .card-info {
             span {
               margin-right: 10px;
@@ -431,6 +504,14 @@
           .er-item {
             color: #343434;
             padding: 6px 0;
+            img {
+              width: 20px;
+              vertical-align: middle;
+              margin-right: 10px;
+            }
+            span {
+              vertical-align: middle;
+            }
           }
         }
 
@@ -493,7 +574,6 @@
 
         span {
           /* padding: 0 2px; */
-
           &.green {
             color: green;
           }

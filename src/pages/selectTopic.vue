@@ -106,7 +106,21 @@
           subjectLebal: this.hotLabel,
           time: this.time
         }
-        this.$router.push({ path: '/exam', query: query });
+
+        let params = {
+          subjectType: encodeURI(query.subjectType),
+          subjectLebal: encodeURI(query.subjectLebal)
+        };
+
+        this.$get(api.subjectList, params).then(res => {
+
+          if (res.data.length) {
+            this.$router.push({ path: '/exam', query: query });
+          } else {
+            this.$Message.warning('没有内容');
+          }
+        });
+        
       }
     }
   };
