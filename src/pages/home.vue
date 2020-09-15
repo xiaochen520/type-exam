@@ -4,8 +4,14 @@
       <div class="outer flex-m">
         <img class="logo" src="../imgs/logo_blue.png" alt="">
         <div class="h-menu flex-1 flex-m flex-h-r">
-          <div class="list">首页</div>
-          <div class="list">消息</div>
+          <div class="list flex-m">
+            <img src="../imgs/ic_home-top1.png" alt="">
+            <span>首页</span>
+          </div>
+          <div class="list flex-m">
+            <img src="../imgs/ic_home-top2.png" alt="">
+            <span>消息</span>
+          </div>
           <div class="entry line" v-if='!isLogin' @click='login'>登录</div>
           <div class="entry" @click='exit'>退出</div>
         </div>
@@ -47,7 +53,7 @@
 
     <div class="module-list flex flex-h-c">
       <div class="m-item">
-        <div class="mi-nav flex-m">
+        <div class="mi-nav">
           <div>考试</div>
             <img src="../imgs/img_index_ks1.png" alt="">
         </div>
@@ -166,6 +172,10 @@ export default {
         .list {
           padding: 0 15px;
           cursor: pointer;
+          img {
+            width: 16px;
+            margin-right: 4px;
+          }
         }
         .entry {
           padding: 0 20px;
@@ -212,6 +222,20 @@ export default {
       margin: 0 20px;
       img {
         width: 100%;
+      }
+      .mi-nav {
+        position: relative;
+        div {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          color: #333;
+          font-size: 16px;
+          font-weight: bold;
+          text-align: center;
+          padding-top: 80px;
+        }
       }
       .btn-group {
         padding: 20px 60px 0;

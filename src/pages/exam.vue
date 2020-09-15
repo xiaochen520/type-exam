@@ -23,7 +23,8 @@
             <div class="topic">
               <span :class="spanSty(index, i)" v-for="(str, i) in item.text" :key="i">{{str}}</span>
             </div>
-            <input v-focus='item.focus' @keyup.space='clickSpace(item, index)' @focus='getFocus(item)' @input='handInput' class="answer" type="text" v-model="item.value" />
+            <input :class="'type-click' + index" @keyup.space='clickSpace(item, index)' @focus='getFocus(item)'
+              @input='handInput' class="answer" type="text" v-model="item.value" />
           </div>
 
         </div>
@@ -53,7 +54,7 @@
             <img src="" alt="">
             <span>{{isPause ? '继续' : '暂停'}}</span>
           </div>
-          <div @click='pauseVoice' class="er-item">
+          <div @click='playAndPauseVoice' class="er-item">
             <img src="" alt="">
             <span>语音{{isPauseVoice ? '播放' : '暂停'}}</span>
           </div>
@@ -107,7 +108,7 @@
     data() {
       return {
         isPause: false,
-        isPauseVoice: true,
+        isPauseVoice: false,
         correctRatio: 0,
         showResModal: false,
         speed: 1,
@@ -124,18 +125,18 @@
     },
     created() {
       this.time = this.$route.query.time;
+      this.second = this.time;
       this.getPaper();
     },
-    mounted() { },
     methods: {
       clickSpace(item, index) {
-        if(index == (this.testList.length - 1)) return;
-       if(item.text.length <= item.value.length) {
-        this.testList.forEach(e => {
-          e.focus = false;
-        })
-        this.testList[index+1].focus = true;        
-       }
+        if (index == (this.testList.length - 1)) return;
+        if (item.text.length <= item.value.length) {
+          this.testList.forEach(e => {
+            e.focus = false;
+          })
+          document.getElementsByClassName('type-click' + (index + 1))[0].focus();
+        }
       },
       getFocus(item) {
         this.testList.forEach(e => {
@@ -144,7 +145,12 @@
         item.focus = true;
       },
       goRes() {
-        this.$router.push({ path: '/' });
+        let params = {
+          title: this.topic.topic,
+          time: this.time,
+          res: this.correctRatio
+        }
+        this.$router.push({ path: '/result', query: params });
       },
       beginNext() {
         this.topic = this.topicArr[1];
@@ -157,54 +163,50 @@
         this.getPaper();
       },
       playAndPauseVoice() {
+        if (!this.isStart) {
+          this.$Message.warning('请开始计时后再操作');
+          return;
+        };
 
-        if (this.isPauseVoice) {
-          if (this.topic.voice) {
-            this.$refs.adEle.pause();
-          } else {
-            this.speech.pause();
-          }
+        if(this.isPauseVoice) {
+          this.isPauseVoice = false;
+          this.resumeVoice();
+        } else {
+          this.isPauseVoice = true;
+          this.pauseVoice();
         }
-
-        if (!this.isPauseVoice) {
-          if (this.topic.voice) {
+        
+      },
+      pauseVoice() {
+        if (this.topic.voice) {
+          this.$refs.adEle.pause();
+        } else {
+          this.speech.pause();
+        }
+      },
+      resumeVoice() {
+        if (this.topic.voice) {
             this.$refs.adEle.play();
           } else {
             this.speech.resume();
           }
-        }
-      },
-      pauseVoice() {
-        if (!this.isStart) return;
-        if (this.isPause) return;
-
-        if (!this.isPauseVoice) {
-          this.isPauseVoice = true;
-          this.playAndPauseVoice();
-        } else {
-          this.isPauseVoice = false;
-          this.playAndPauseVoice();
-        }
       },
       pauseAll() {
+        if (!this.isStart) {
+          this.$Message.warning('请开始计时后再操作');
+          return;
+        };
         if (!this.isPause) {
           //暂停
           this.isPause = true;
-          if (this.topic.voice) {
-            this.$refs.adEle.pause();
-          } else {
-            this.speech.pause();
-          }
+          this.isPauseVoice = true;
+          this.pauseVoice();
         } else {
           this.isPause = false;
+          this.isPauseVoice = false;
           this.calcTime(this.second);
-          if (this.topic.voice) {
-            this.$refs.adEle.play();
-          } else {
-            this.speech.resume();
-          }
+          this.resumeVoice();
         }
-
       },
       exitExam() {
         this.exit();
@@ -221,13 +223,14 @@
       formatData() {
         let workArr = this.topic.content.split(" ");
         let testArr = [];
-        let cycleIndex = Math.ceil(workArr.length / 10);
+        const rowNumber = 15;
+        let cycleIndex = Math.ceil(workArr.length / rowNumber);
         for (let i = 0; i < cycleIndex; i++) {
           let str = "";
           if (i + 1 == cycleIndex) {
-            str = workArr.slice(i * 10).join(" ");
+            str = workArr.slice(i * rowNumber).join(" ");
           } else {
-            str = workArr.slice(i * 10, 10 * (i + 1)).join(" ");
+            str = workArr.slice(i * rowNumber, rowNumber * (i + 1)).join(" ");
           }
           console.log(str);
           testArr.push({ text: str, value: "", focus: false });
@@ -235,10 +238,6 @@
         this.testList = testArr;
       },
       getPaper() {
-        if (this.topicArr.length) {
-          this.formatData();
-          return;
-        }
         let query = this.$route.query;
         let params = {
           subjectType: encodeURI(query.subjectType),
@@ -246,12 +245,12 @@
         };
 
         this.$get(api.subjectList, params).then(res => {
-          
+
           if (res.data.length) {
             this.topicArr = res.data;
             this.topic = this.topicArr[0];
             this.formatData();
-            
+
             if (!this.topic.voice) {
               this.speech = new Speech();
               if (this.speech.hasBrowserSupport()) {
@@ -276,15 +275,29 @@
       },
       exit() {
         this.isPauseVoice = true;
-        this.playAndPauseVoice();
-        if (this.topic.voice) {
-          this.$refs.audio.innerHTML = "";
-        }
-
+        this.isPause = true;
+        this.pauseVoice();
         this.isEnd = true;
         clearTimeout(this.timer);
         this.calcMark();
         this.showResModal = true;
+
+        let params = {
+          userId: sessionStorage.code,
+          name: sessionStorage.user,
+          title: this.topic.topic,
+          kind: this.topic.subjectType,
+          time: this.time - this.second,
+          accuracy: this.correctRatio,
+          score: this.correctRatio
+        }
+
+        this.$post(api.submitResule, params).then(res => {
+          if(res.errno == 0) {
+            this.$Message.success('成绩上传成功');
+          }
+        });
+
       },
       calcMark() {
         let text = "";
@@ -302,6 +315,10 @@
         this.correctRatio = (sucNum / text.length * 100).toFixed(2);
       },
       changeSpeed() {
+        if(this.isPauseVoice || !this.isStart) {
+          this.$Message.warning('请开始播放后再操作');
+          return;
+        }
         if (this.speed >= 4) {
           this.speed = 1;
         } else {
@@ -318,7 +335,6 @@
           });
         }
       },
-      playAudio() { },
       calcTime(time) {
         let restTime = time;
 
@@ -457,14 +473,16 @@
         .answer {
           width: 100%;
           padding: 5px 10px;
+          font-size: 15px;
         }
       }
 
       .focus {
         background: #DDEEFF;
         color: #343434;
+
         .answer {
-         border-color: #1466B8;
+          border-color: #1466B8;
         }
       }
 
@@ -474,7 +492,7 @@
         margin-bottom: 10px;
 
         span {
-          padding: 0 2px;
+          /* padding: 0 2px; */
 
           &.green {
             color: green;

@@ -9,7 +9,7 @@
           <input v-model='user' class="form-item" type="text" />
           <input v-model='psd' class="form-item" type="password" />
           <div class="save-pw flex-m">
-            <input type="radio" />
+            <input v-model='memory' type="checkbox" />
             <span>记住用户名</span>
           </div>
           <button class="login-btn" @click='login'>登录</button>
@@ -24,8 +24,12 @@
     data() {
       return {
         user: '',
-        psd: ''
+        psd: '',
+        memory: true
       };
+    },
+    created() {
+      this.user = sessionStorage.user;
     },
     methods: {
       login() {
@@ -51,6 +55,8 @@
               onClose: () => {
                 sessionStorage.setItem('token', res.token);
                 sessionStorage.setItem('user', this.user);
+                sessionStorage.setItem('code', res.code);
+                
                 this.$router.push('/');
               }
             })

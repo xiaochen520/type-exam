@@ -41,7 +41,7 @@
       </div>
       <div class="b-footer tc">
         <button class="s" @click='beforeExam'>开始训练</button>
-        <button>重置选项</button>
+        <button @click='resetForm'>重置选项</button>
       </div>
     </div>
 
@@ -78,6 +78,11 @@
       this.user = sessionStorage.user;
     },
     methods: {
+      resetForm() {
+        this.topicType = '文章';
+        this.hotLabel = '大自然';
+        this.time = '';
+      },
       clickHot(item) {
         this.currentHot = item.id;
         this.hotLabel = item.text;

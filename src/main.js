@@ -17,15 +17,6 @@ Vue.prototype.$post = post;
 Vue.prototype.$Message = Message;
 Vue.config.productionTip = false
 
-Vue.directive('focus', {
-  // 当被绑定的元素插入到 DOM 中时……
-  inserted: function (el, binding) {
-    if(binding.value == true) {
-      el.focus()
-    }
-  }
-})
-
 new Vue({
   router,
   store,
