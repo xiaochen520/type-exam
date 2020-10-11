@@ -15,8 +15,8 @@
         <div v-if='topic' class="left-nav flex-m">
           <span class="s">开始输入时计时！</span>
           <div class="flex-1 flex-m flex-h-r card-info">
-            <span>文章名称：{{topic.topic}}</span>
-            <span>文章类别：{{topic.subjectType}}</span>
+            <span>文章名称：{{topic.subjectName}}</span>
+            <span>文章类别：{{topic.subjectKind}}</span>
           </div>
         </div>
         <div class="paper">
@@ -47,7 +47,7 @@
           </div>
           <div class="er-item">
             <img src="../imgs/ic_xl_zdcl.png" alt="">
-            <span v-if='topic'>总单词量: {{topic.content.split(" ").length}}</span>
+            <span v-if='topic'>总单词量: {{topic.subjectContent.split(" ").length}}</span>
           </div>
         </div>
         <div class="exam-info opera-btn">
@@ -131,13 +131,26 @@
       };
     },
     created() {
-      this.time = this.$route.query.time;
+      
+      this.topicArr = JSON.parse(sessionStorage.examList);
+      this.topic = this.topicArr[this.currentNum];
+      this.time = this.topicArr[0].subjectTime;
       this.second = this.time;
-      this.getPaper();
+      this.formatData();
+
+      if (!this.topic.voice) {
+        this.speech = new Speech();
+        if (this.speech.hasBrowserSupport()) {
+          this.speech.setLanguage("en-US");
+          this.speech.setRate(this.speed);
+        } else {
+          console.log("speech synthesis unsupported");
+        }
+      }
       sessionStorage.removeItem('res');
 
       document.onkeydown = oEvent => {
-        console.log(oEvent)
+        
         var oEvent = oEvent || window.oEvent;
 
         //获取ctrl 键对应的事件属性
@@ -156,7 +169,7 @@
             } else {
               this.speech.cancel();
               this.speech.setRate(this.speed);
-              this.speech.speak({ text: this.topic.content }).then(() => {
+              this.speech.speak({ text: this.topic.subjectContent }).then(() => {
                 console.log("读取成功");
               });
             }
@@ -279,7 +292,7 @@
         this.calcMark();
       },
       formatData() {
-        let workArr = this.topic.content.split(" ");
+        let workArr = this.topic.subjectContent.split(" ");
         let testArr = [];
         const rowNumber = 15;
         let cycleIndex = Math.ceil(workArr.length / rowNumber);
@@ -295,41 +308,13 @@
         }
         this.testList = testArr;
       },
-      getPaper() {
-        let query = this.$route.query;
-        let params = {
-          subjectType: encodeURI(query.subjectType),
-          subjectLebal: encodeURI(query.subjectLebal)
-        };
-
-        this.$get(api.subjectList, params).then(res => {
-
-          if (res.data.length) {
-            this.topicArr = res.data;
-            this.topic = this.topicArr[this.currentNum];
-            this.formatData();
-
-            if (!this.topic.voice) {
-              this.speech = new Speech();
-              if (this.speech.hasBrowserSupport()) {
-                this.speech.setLanguage("en-US");
-                this.speech.setRate(this.speed);
-              } else {
-                console.log("speech synthesis unsupported");
-              }
-            }
-          } else {
-            this.$Message.warning('没有内容');
-          }
-        });
-      },
       playVoice() {
         if (this.topic.voice) {
           this.$refs.adEle.play();
           this.$refs.adEle.playbackRate = this.speed;
         } else {
           this.speech.cancel();
-          this.speech.speak({ text: this.topic.content }).then(() => {
+          this.speech.speak({ text: this.topic.subjectContent }).then(() => {
             console.log("读取成功");
           });
         }
@@ -348,7 +333,7 @@
           resArr = JSON.parse(sessionStorage.res);
         }
         resArr.push({
-          title: this.topic.topic,
+          title: this.topic.subjectName,
           time: this.time - this.second,
           res: this.correctRatio
         })
@@ -356,8 +341,8 @@
         let params = {
           userId: sessionStorage.userId,
           name: sessionStorage.user,
-          title: this.topic.topic,
-          kind: this.topic.subjectType,
+          title: this.topic.subjectName,
+          kind: this.topic.subjectKind,
           time: this.time - this.second,
           accuracy: this.correctRatio,
           score: this.correctRatio
@@ -401,7 +386,7 @@
         } else {
           this.speech.cancel();
           this.speech.setRate(this.speed);
-          this.speech.speak({ text: this.topic.content }).then(() => {
+          this.speech.speak({ text: this.topic.subjectContent }).then(() => {
             console.log("读取成功");
           });
         }

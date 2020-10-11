@@ -5,12 +5,13 @@ import store from './store'
 import 'normalize.css';
 import 'view-design/dist/styles/iview.css';
 import { get, post } from './util/request'
-import { Radio, RadioGroup, Modal, Button, Message } from 'view-design';
+import { Radio, RadioGroup, Modal, Button, Message, Table } from 'view-design';
 
 Vue.component('Radio', Radio);
 Vue.component('RadioGroup', RadioGroup);
 Vue.component('Modal', Modal);
 Vue.component('Button', Button);
+Vue.component('Table', Table);
 
 Vue.prototype.$get = get;
 Vue.prototype.$post = post;

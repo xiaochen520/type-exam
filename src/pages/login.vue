@@ -56,7 +56,7 @@
                 sessionStorage.setItem('token', res.token);
                 sessionStorage.setItem('user', this.user);
                 sessionStorage.setItem('code', res.code);
-                
+                sessionStorage.setItem('userId', res.userId);
                 this.$router.push('/');
               }
             })
