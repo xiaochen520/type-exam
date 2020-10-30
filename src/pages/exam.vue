@@ -1,5 +1,5 @@
 <template>
-  <div class="exam">
+  <div class="exam" @selectstart="stopCopy">
     <div v-if='topic && topic.voice' ref='audio' class="audio-box">
       <audio ref='adEle'>
         <source :src="topic.voice" type="audio/ogg">
@@ -24,8 +24,8 @@
             <div class="topic">
               <span :class="spanSty(index, i)" v-for="(str, i) in item.text" :key="i">{{str}}</span>
             </div>
-            <input :class="'type-click' + index" @keyup.space='clickSpace(item, index)' @focus='getFocus(item)' @input='handInput(index)' class="answer"
-              type="text" v-model="item.value" />
+            <input :class="'type-click' + index" @keyup.space='clickSpace(item, index)' @focus='getFocus(item)' @input='handInput(index)'
+              class="answer" type="text" v-model="item.value" />
           </div>
 
         </div>
@@ -136,8 +136,10 @@
       this.getPaper();
       sessionStorage.removeItem('res');
 
+      document.addEventListener('contextmenu', this.contextMenuEvt);
+
       document.onkeydown = oEvent => {
-        console.log(oEvent)
+      
         var oEvent = oEvent || window.oEvent;
 
         //获取ctrl 键对应的事件属性
@@ -176,8 +178,17 @@
     },
     beforeDestroy() {
       this.speech.cancel();
+      document.removeEventListener('contextmenu', this.contextMenuEvt);
     },
     methods: {
+      stopCopy(event) {
+        event = event || window.event;
+        event.preventDefault?event.preventDefault():(event.returnValue = false);
+      },
+      contextMenuEvt(event) {
+        event = event || window.event;
+        event.preventDefault?event.preventDefault():(event.returnValue = false);
+      },
       clickSpace(item, index) {
         if (index == (this.testList.length - 1)) return;
         if (item.text.length <= item.value.length) {
