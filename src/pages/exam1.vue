@@ -8,9 +8,19 @@
     <div class="content">
       <div class="left">
         <div class="left-head flex-m">
-          <img src="../imgs/htmal5icon06.png" alt="">
-          <span>/首页/</span>
-          <span>训练</span>
+            <div class="flex-1">
+                <img src="../imgs/htmal5icon06.png" alt="">
+                <span>/首页/</span>
+                <span>训练</span>
+            </div>
+          
+          <div>
+              <span>是否隐藏文本：</span>
+              <i-switch v-model="hiddenText">
+                  <span slot="open">是</span>
+                  <span slot="close">否</span>
+              </i-switch>
+            </div>
         </div>
         <div v-if='topic' class="left-nav flex-m">
           <span class="s">开始输入时计时！</span>
@@ -21,7 +31,7 @@
         </div>
         <div class="paper">
           <div class="exam-item" :class='{focus: item.focus}' v-for="(item, index) in testList" :key="index">
-            <div class="topic">
+            <div class="topic" v-show='!hiddenText'>
               <span :class="spanSty(index, i)" v-for="(str, i) in item.text" :key="i">{{str}}</span>
             </div>
             <input :class="'type-click' + index" @keyup.space='clickSpace(item, index)' @focus='getFocus(item)' @input='handInput(index)' class="answer"
@@ -114,6 +124,7 @@
     data() {
       return {
         isPause: false,
+        hiddenText: false,
         isPauseVoice: false,
         correctRatio: 0,
         showResModal: false,
