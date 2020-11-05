@@ -9,18 +9,18 @@
       <div class="left">
         <div class="left-head flex-m">
           <div class="flex-1">
-              <img src="../imgs/htmal5icon06.png" alt="">
-              <span>/首页/</span>
-              <span>训练</span>
+            <img src="../imgs/htmal5icon06.png" alt="">
+            <span>/首页/</span>
+            <span>训练</span>
           </div>
           <div>
             <span>是否隐藏文本：</span>
             <i-switch v-model="hiddenText">
-                <span slot="open">是</span>
-                <span slot="close">否</span>
+              <span slot="open">是</span>
+              <span slot="close">否</span>
             </i-switch>
           </div>
-          
+
         </div>
         <div v-if='topic' class="left-nav flex-m">
           <span class="s">开始输入时计时！</span>
@@ -41,7 +41,7 @@
         </div>
       </div>
       <div class="right">
-        <div class="tc clock">
+        <div v-if='!$route.query.upload' class="tc clock">
           <img src="../imgs/icon-time.png" alt="">
           <div>倒计时</div>
           <div class="time">
@@ -76,8 +76,14 @@
             <img src="../imgs/icon-play.png" alt="">
             <span>播放速度:X{{speed}}</span>
           </div>
-          <div class="er-item quick">增加语速 ALT+1</div>
-          <div class="er-item quick">减慢语速 ALT+2</div>
+          <div class="er-item quick">
+            <img src="../imgs/add-icon.png" alt="">
+            <span>增加语速 ALT+1</span>
+          </div>
+          <div class="er-item quick">
+            <img src="../imgs/mul-icon.png" alt="">
+            <span>减慢语速 ALT+2</span>
+          </div>
           <div class="er-item" @click='exitExam'>
             <img src="../imgs/icon-exit.png" alt="">
             <span>退出</span>
@@ -150,7 +156,7 @@
       document.addEventListener('contextmenu', this.contextMenuEvt);
 
       document.onkeydown = oEvent => {
-      
+
         var oEvent = oEvent || window.oEvent;
 
         //获取ctrl 键对应的事件属性
@@ -163,7 +169,7 @@
         if (oEvent.keyCode == 50 && bCtrlKeyCode) {
           //ctrl+2 减慢语速
           if (this.speed > 1) {
-            this.speed++;
+            this.speed--;
             if (this.topic.voice) {
               this.$refs.adEle.playbackRate = this.speed;
             } else {
@@ -194,11 +200,11 @@
     methods: {
       stopCopy(event) {
         event = event || window.event;
-        event.preventDefault?event.preventDefault():(event.returnValue = false);
+        event.preventDefault ? event.preventDefault() : (event.returnValue = false);
       },
       contextMenuEvt(event) {
         event = event || window.event;
-        event.preventDefault?event.preventDefault():(event.returnValue = false);
+        event.preventDefault ? event.preventDefault() : (event.returnValue = false);
       },
       clickSpace(item, index) {
         if (index == (this.testList.length - 1)) return;
@@ -324,26 +330,42 @@
           subjectLebal: encodeURI(query.subjectLebal)
         };
 
-        this.$get(api.subjectList, params).then(res => {
+        if (this.$route.query.upload) {
+          this.topicArr = JSON.parse(sessionStorage.paper);
+          this.topic = this.topicArr[this.currentNum];
+          this.formatData();
 
-          if (res.data.length) {
-            this.topicArr = res.data;
-            this.topic = this.topicArr[this.currentNum];
-            this.formatData();
-
-            if (!this.topic.voice) {
-              this.speech = new Speech();
-              if (this.speech.hasBrowserSupport()) {
-                this.speech.setLanguage("en-US");
-                this.speech.setRate(this.speed);
-              } else {
-                console.log("speech synthesis unsupported");
-              }
+          if (!this.topic.voice) {
+            this.speech = new Speech();
+            if (this.speech.hasBrowserSupport()) {
+              this.speech.setLanguage("en-US");
+              this.speech.setRate(this.speed);
+            } else {
+              console.log("speech synthesis unsupported");
             }
-          } else {
-            this.$Message.warning('没有内容');
           }
-        });
+        } else {
+          this.$get(api.subjectList, params).then(res => {
+
+            if (res.data.length) {
+              this.topicArr = res.data;
+              this.topic = this.topicArr[this.currentNum];
+              this.formatData();
+
+              if (!this.topic.voice) {
+                this.speech = new Speech();
+                if (this.speech.hasBrowserSupport()) {
+                  this.speech.setLanguage("en-US");
+                  this.speech.setRate(this.speed);
+                } else {
+                  console.log("speech synthesis unsupported");
+                }
+              }
+            } else {
+              this.$Message.warning('没有内容');
+            }
+          });
+        }
       },
       playVoice() {
         if (this.topic.voice) {
@@ -375,22 +397,22 @@
           res: this.correctRatio
         })
         sessionStorage.setItem('res', JSON.stringify(resArr));
-        let params = {
-          userId: sessionStorage.userId,
-          name: sessionStorage.user,
-          title: this.topic.topic,
-          kind: this.topic.subjectType,
-          time: this.time - this.second,
-          accuracy: this.correctRatio,
-          score: this.correctRatio
-        }
-
-        this.$post(api.submitResule, params).then(res => {
-          if (res.errno == 0) {
-            this.$Message.success('成绩上传成功');
+        if (!this.$route.query.upload) {
+          let params = {
+            userId: sessionStorage.userId,
+            name: sessionStorage.user,
+            title: this.topic.topic,
+            kind: this.topic.subjectType,
+            time: this.time - this.second,
+            accuracy: this.correctRatio,
+            score: this.correctRatio
           }
-        });
-
+          this.$post(api.submitResule, params).then(res => {
+            if (res.errno == 0) {
+              this.$Message.success('成绩上传成功');
+            }
+          });
+        }
       },
       calcMark() {
         let text = "";

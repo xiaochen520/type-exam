@@ -41,7 +41,10 @@
       </div>
       <div class="b-footer tc">
         <button class="s" @click='beforeExam'>开始训练</button>
-        <button @click='resetForm'>重置选项</button>
+        <button style="margin-right: 15px;" @click='resetForm'>重置选项</button>
+        <Upload :show-file-list='false' :on-success='uploadSuc' style="display: inline-block;" action="/platform-framework/api/upload/readWordOrText" :limit="1">
+          <button>导入题目</button>
+        </Upload>
       </div>
     </div>
 
@@ -78,6 +81,16 @@
       this.user = sessionStorage.user;
     },
     methods: {
+      uploadSuc(res) {
+        if(res.errno == 0) {
+          let params = {
+            time: 24 * 60 * 60,
+            upload: true
+          }
+          sessionStorage.setItem('paper', JSON.stringify(res.data));
+          this.$router.push({ path: '/exam', query: params });
+        }
+      },
       resetForm() {
         this.topicType = '文章';
         this.hotLabel = '大自然';
@@ -214,7 +227,7 @@
         border: 1px solid #1466B8;
         border-radius: 6px;
         padding: 6px 0;
-        width: 150px;
+        width: 120px;
         &.s {
           background: #1466B8;
           color: #fff;
