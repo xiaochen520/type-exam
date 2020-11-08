@@ -307,7 +307,9 @@
         this.calcMark();
       },
       formatData() {
+        console.log(this.topic)
         let workArr = this.topic.content.split(" ");
+        console.log(workArr)
         let testArr = [];
         const rowNumber = 15;
         let cycleIndex = Math.ceil(workArr.length / rowNumber);
@@ -318,7 +320,7 @@
           } else {
             str = workArr.slice(i * rowNumber, rowNumber * (i + 1)).join(" ");
           }
-          console.log(str);
+          
           testArr.push({ text: str, value: "", focus: false });
         }
         this.testList = testArr;
